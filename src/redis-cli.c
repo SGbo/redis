@@ -1111,7 +1111,8 @@ static int cliSendCommand(int argc, char **argv, long repeat) {
     if (!strcasecmp(command,"shutdown")) config.shutdown = 1;
     if (!strcasecmp(command,"monitor")) config.monitor_mode = 1;
     if (!strcasecmp(command,"subscribe") ||
-        !strcasecmp(command,"psubscribe")) config.pubsub_mode = 1;
+        !strcasecmp(command,"psubscribe") ||
+        !strcasecmp(command,"rsubscribe")) config.pubsub_mode = 1;
     if (!strcasecmp(command,"sync") ||
         !strcasecmp(command,"psync")) config.slave_mode = 1;
 
