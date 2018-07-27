@@ -1,0 +1,15 @@
+{
+  "files.associations": {
+    "sha1.h": "c",
+    "array": "c",
+    "chrono": "c",
+    "functional": "c",
+    "istream": "c",
+    "ostream": "c",
+    "ratio": "c",
+    "type_traits": "c",
+    "tuple": "c",
+    "utility": "c",
+    "pcre.h": "c"
+  }
+}

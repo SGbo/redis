@@ -27,6 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define PCRE2_CODE_UNIT_WIDTH 8
+
 #include "fmacros.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,6 +41,7 @@
 #include <float.h>
 #include <stdint.h>
 #include <errno.h>
+#include <pcre2.h>
 
 #include "util.h"
 #include "sha1.h"
@@ -168,6 +171,66 @@ int stringmatchlen(const char *pattern, int patternLen,
 
 int stringmatch(const char *pattern, const char *string, int nocase) {
     return stringmatchlen(pattern,strlen(pattern),string,strlen(string),nocase);
+}
+
+int regexmatch(const char *pattern, int pattern_len,
+               const char *string, int string_len)
+{
+    int errornumber;
+    int rc;
+    
+    pcre2_code *re;
+    pcre2_match_data *match_data;
+    
+    PCRE2_SIZE erroroffset;
+
+    re = pcre2_compile((PCRE2_SPTR)pattern,               /* the pattern */
+                       pattern_len,           /* the pattern length */
+                       0,                     /* default options */
+                       &errornumber,          /* for error number */
+                       &erroroffset,          /* for error offset */
+                       NULL);                 /* use default compile context */
+
+    if (re == NULL) {
+        PCRE2_UCHAR buffer[256];
+        pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+        printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset,
+            buffer);
+        return 0;
+    }
+
+    match_data = pcre2_match_data_create_from_pattern(re, NULL);
+
+    rc = pcre2_match(
+    re,                   /* the compiled pattern */
+    (PCRE2_SPTR)string,              /* the subject string */
+    string_len,       /* the length of the subject */
+    0,                    /* start at offset 0 in the subject */
+    0,                    /* default options */
+    match_data,           /* block for storing the result */
+    NULL); /* use default match context */
+
+    if (rc < 0){
+        switch(rc) {
+            case PCRE2_ERROR_NOMATCH:
+                printf("No match\n");
+                break;
+                /*
+                Handle other special cases if you like
+                */
+            default:
+                printf("Matching error %d\n", rc);
+                break;
+        }
+        pcre2_match_data_free(match_data);   /* Release memory used for the match */
+        pcre2_code_free(re);                 /* data and the compiled pattern. */
+        return 0;
+    }
+
+    pcre2_match_data_free(match_data);  /* Release the memory that was used */
+    pcre2_code_free(re); /* for the match data and the pattern. */
+
+    return 1;
 }
 
 /* Convert a string representing an amount of memory into the number of

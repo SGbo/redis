@@ -124,7 +124,7 @@ int pubsubUnsubscribeChannel(client *c, robj *channel, int notify) {
 }
 
 /* Subscribe a client to a pattern. Returns 1 if the operation succeeded, or 0 if the client was already subscribed to that pattern. */
-int pubsubSubscribePattern(client *c, robj *pattern) {
+int pubsubSubscribePattern(client *c, robj *pattern, pubsub_pattern_type_t type) {
     int retval = 0;
 
     if (listSearchKey(c->pubsub_patterns,pattern) == NULL) {
@@ -135,6 +135,7 @@ int pubsubSubscribePattern(client *c, robj *pattern) {
         pat = zmalloc(sizeof(*pat));
         pat->pattern = getDecodedObject(pattern);
         pat->client = c;
+        pat->type = type;
         listAddNodeTail(server.pubsub_patterns,pat);
     }
     /* Notify the client */
@@ -221,6 +222,29 @@ int pubsubUnsubscribeAllPatterns(client *c, int notify) {
     return count;
 }
 
+int pubsubMatchChannelPattern(pubsub_pattern_type_t pattern_type,
+                       char *pattern_ptr, int pattern_len,
+                       char *channel_ptr, int channel_len)
+{
+    int retval = 0;
+
+    switch (pattern_type) {
+        case pubsub_pattern_regex:
+            retval = regexmatch(pattern_ptr,
+                                pattern_len,
+                                channel_ptr,
+                                channel_len);
+            break;
+        default: // pubsub_pattern_default
+            retval = stringmatchlen(pattern_ptr,
+                                    pattern_len,
+                                    channel_ptr,
+                                    channel_len,0);
+    }
+
+    return retval;
+}
+
 /* Publish a message */
 int pubsubPublishMessage(robj *channel, robj *message) {
     int receivers = 0;
@@ -253,10 +277,12 @@ int pubsubPublishMessage(robj *channel, robj *message) {
         while ((ln = listNext(&li)) != NULL) {
             pubsubPattern *pat = ln->value;
 
-            if (stringmatchlen((char*)pat->pattern->ptr,
-                                sdslen(pat->pattern->ptr),
-                                (char*)channel->ptr,
-                                sdslen(channel->ptr),0)) {
+            if (pubsubMatchChannelPattern(pat->type,
+                                         (char*)pat->pattern->ptr,
+                                         sdslen(pat->pattern->ptr),
+                                         (char*)channel->ptr,
+                                         sdslen(channel->ptr)))
+            {
                 addReply(pat->client,shared.mbulkhdr[4]);
                 addReply(pat->client,shared.pmessagebulk);
                 addReplyBulk(pat->client,pat->pattern);
@@ -298,7 +324,15 @@ void psubscribeCommand(client *c) {
     int j;
 
     for (j = 1; j < c->argc; j++)
-        pubsubSubscribePattern(c,c->argv[j]);
+        pubsubSubscribePattern(c,c->argv[j],pubsub_pattern_default);
+    c->flags |= CLIENT_PUBSUB;
+}
+
+void rsubscribeCommand(client *c) {
+    int j;
+
+    for (j = 1; j < c->argc; j++)
+        pubsubSubscribePattern(c,c->argv[j],pubsub_pattern_regex);
     c->flags |= CLIENT_PUBSUB;
 }
 

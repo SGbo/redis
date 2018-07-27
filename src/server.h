@@ -1263,9 +1263,15 @@ struct redisServer {
     pthread_mutex_t unixtime_mutex;
 };
 
+typedef enum {
+	pubsub_pattern_default = 0,
+    pubsub_pattern_regex = 1
+} pubsub_pattern_type_t;
+
 typedef struct pubsubPattern {
     client *client;
     robj *pattern;
+    pubsub_pattern_type_t type;
 } pubsubPattern;
 
 typedef void redisCommandProc(client *c);
@@ -2036,6 +2042,7 @@ void hincrbyfloatCommand(client *c);
 void subscribeCommand(client *c);
 void unsubscribeCommand(client *c);
 void psubscribeCommand(client *c);
+void rsubscribeCommand(client *c);
 void punsubscribeCommand(client *c);
 void publishCommand(client *c);
 void pubsubCommand(client *c);

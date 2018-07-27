@@ -66,8 +66,8 @@ endif
 FINAL_CFLAGS=$(STD) $(WARN) $(OPT) $(DEBUG) $(CFLAGS) $(REDIS_CFLAGS)
 FINAL_LDFLAGS=$(LDFLAGS) $(REDIS_LDFLAGS) $(DEBUG)
 FINAL_LIBS=-lm
+FINAL_LIBS+= -lpcre2-8
 DEBUG=-g -ggdb
-
 ifeq ($(uname_S),SunOS)
 	# SunOS
         ifneq ($(@@),32bit)

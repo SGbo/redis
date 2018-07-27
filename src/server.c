@@ -267,6 +267,7 @@ struct redisCommand redisCommandTable[] = {
     {"subscribe",subscribeCommand,-2,"pslt",0,NULL,0,0,0,0,0},
     {"unsubscribe",unsubscribeCommand,-1,"pslt",0,NULL,0,0,0,0,0},
     {"psubscribe",psubscribeCommand,-2,"pslt",0,NULL,0,0,0,0,0},
+    {"rsubscribe",rsubscribeCommand,-2,"pslt",0,NULL,0,0,0,0,0},
     {"punsubscribe",punsubscribeCommand,-1,"pslt",0,NULL,0,0,0,0,0},
     {"publish",publishCommand,3,"pltF",0,NULL,0,0,0,0,0},
     {"pubsub",pubsubCommand,-2,"pltR",0,NULL,0,0,0,0,0},
